@@ -15,11 +15,9 @@ import { el, preencher } from "../ui/base.js";
 import { icone } from "../ui/icones.js";
 import { equipamentosDisponiveis, NOME_NIVEL } from "../dados/catalogo.js";
                                                              
-import { OBJETIVOS, gravarPerfil } from "../dados/perfil.js";
+import { OBJETIVOS } from "../dados/perfil.js";
                                                  
-import { gerarPlano, gravarPlano } from "../dados/plano.js";
-import { historicoDeExemplo } from "../dados/exemplo.js";
-import { gravarHistorico, lerHistorico } from "../dados/progresso.js";
+import { instalarPerfil } from "../dados/instalacao.js";
 
                                 
 
@@ -385,12 +383,7 @@ export function faltando(rascunho          )                   {
 }
 
 function gerar(perfil        , catalogo             , raiz             , aoConcluir            )       {
-  const completo         = {
-    ...perfil,
-    nome: perfil.nome.trim(),
-    equipamentos: perfil.equipamentos ?? [],
-    criadoEm: new Date().toISOString(),
-  };
+  const completo         = { ...perfil, nome: perfil.nome.trim() };
 
   const mensagens = [
     `Filtrando ${catalogo.length} exercícios pelo seu nível e ambiente…`,
@@ -408,24 +401,11 @@ function gerar(perfil        , catalogo             , raiz             , aoConcl
       return;
     }
 
-    let plano;
     try {
-      plano = gerarPlano(completo, catalogo);
+      instalarPerfil(completo, catalogo);
     } catch (erro) {
       mostrarSemExercicios(raiz, erro         );
       return;
-    }
-    gravarPerfil(completo);
-
-    // Historico de exemplo so quando nao ha nada de verdade. Quem refaz as
-    // respostas depois de treinar tres semanas nao pode ter o proprio historico
-    // trocado por um simulado.
-    if (lerHistorico().length === 0) {
-      const semeado = historicoDeExemplo(plano);
-      gravarPlano(semeado.plano);
-      gravarHistorico(semeado.historico);
-    } else {
-      gravarPlano(plano);
     }
 
     aoConcluir();

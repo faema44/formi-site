@@ -27,6 +27,8 @@ import { telaTreinos } from "../src/telas/treinos.js";
 import { telaEvolucao } from "../src/telas/evolucao.js";
 import { telaPerfil } from "../src/telas/perfil.js";
 import { telaSessao } from "../src/telas/sessao.js";
+import { ONBOARDING, PERFIL_DEMO } from "../src/demonstracao.js";
+import { instalarPerfil } from "../src/dados/instalacao.js";
 
 const ABAS                                                                   = [
   { rota: "inicio", nome: "Início", icone: "inicio" },
@@ -47,6 +49,8 @@ const raiz = document.getElementById("app") ;
 const nav = document.getElementById("nav") ;
 
 let catalogo              = [];
+/** Ver o uso em `desenhar()`: trava contra recursao quando o perfil nao grava. */
+let tentouDemo = false;
 
 /**
  * Recolhe o resultado que o motor deixou e o costura no treino em andamento.
@@ -108,6 +112,16 @@ async function iniciar()                {
   desenhar();
 }
 
+function avisoDeFalha(titulo        , detalhe        )              {
+  return el("div", { classe: "tela sem-nav" }, [
+    el("div", { classe: "vazio" }, [
+      el("div", { classe: "vazio-emoji", texto: "⚠️" }),
+      el("h2", { classe: "cartao-titulo", texto: titulo }),
+      el("p", { texto: detalhe }),
+    ]),
+  ]);
+}
+
 function contexto()           {
   const perfil = lerPerfil();
   const plano = lerPlano();
@@ -155,6 +169,34 @@ function desenhar()       {
   const ctx = contexto();
 
   if (!ctx.perfil || !ctx.plano) {
+    // Onboarding desligado: instala o perfil de demonstracao e segue direto
+    // para a tela inicial. Ver `demonstracao.ts` — e uma chave, nao uma
+    // remocao, e o fluxo de perguntas continua inteiro.
+    if (!ONBOARDING) {
+      // Uma tentativa, nunca duas. `gravar()` engole falha de armazenamento —
+      // e a navegacao privada do Safari faz `setItem` falhar —, entao sem esta
+      // trava o perfil nunca apareceria, `desenhar()` se chamaria de novo, e o
+      // app morreria em estouro de pilha em vez de dizer o que houve.
+      if (tentouDemo) {
+        preencher(raiz, avisoDeFalha(
+          "Não foi possível preparar a demonstração",
+          "O navegador não conseguiu gravar os dados do app. Costuma ser aba " +
+          "anônima (o Safari bloqueia o armazenamento nela) ou espaço esgotado. " +
+          "Abra numa aba comum, ou limpe os dados do site.",
+        ));
+        return;
+      }
+      tentouDemo = true;
+      try {
+        instalarPerfil(PERFIL_DEMO, catalogo);
+      } catch (erro) {
+        preencher(raiz, avisoDeFalha("Não foi possível montar o plano", String((erro         ).message)));
+        return;
+      }
+      if (!location.hash) location.hash = "#/inicio";
+      desenhar();
+      return;
+    }
     nav.classList.add("oculto");
     preencher(
       raiz,

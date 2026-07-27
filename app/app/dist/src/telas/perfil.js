@@ -13,6 +13,7 @@ import { totalExercicios } from "../dados/plano.js";
 import { gravarHistorico, lerHistorico } from "../dados/progresso.js";
                                                       
 import { limparTudo } from "../dados/armazenamento.js";
+import { ONBOARDING } from "../demonstracao.js";
                                                
 
 /** Ha registro semeado pelo app no historico. Derivado, nunca guardado a parte. */
@@ -57,11 +58,16 @@ export function telaPerfil(ctx          )              {
     ]),
 
     el("div", { estilo: { marginTop: "22px", display: "flex", flexDirection: "column", gap: "10px" } }, [
-      el("button", {
-        classe: "botao fantasma",
-        texto: "Refazer minhas respostas",
-        ao: { click: () => ctx.reiniciar() },
-      }),
+      // Com o onboarding desligado nao ha respostas para refazer: o botao
+      // limparia o perfil e o app reinstalaria o mesmo perfil de demonstracao,
+      // dando a impressao de que o toque nao fez nada.
+      ONBOARDING
+        ? el("button", {
+            classe: "botao fantasma",
+            texto: "Refazer minhas respostas",
+            ao: { click: () => ctx.reiniciar() },
+          })
+        : null,
       temExemplo(historico)
         ? el("button", {
             classe: "botao fantasma",
