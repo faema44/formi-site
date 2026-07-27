@@ -68,30 +68,15 @@ nav.topo-links a:hover { color: var(--tinta); }
 
 /* ---- painel de marca ----------------------------------------------------- */
 
-/* A arte e clara e a pagina e escura: a borda evita que ela flutue solta sobre
-   o fundo, e o raio combina com o das telas logo abaixo. */
-.marca { padding-bottom: 72px; }
-.marca img {
+/* Nome proprio, e nao `.marca`: aquela ja e a assinatura do cabecalho, e o
+   seletor compartilhado dava padding de 72px no link do topo.
+   A arte e clara e a pagina e escura, entao a borda evita que ela flutue solta
+   sobre o fundo. */
+.painel-marca { padding-bottom: 72px; }
+.painel-marca img {
   width: 100%; height: auto; border-radius: 16px;
   border: 1px solid var(--borda);
   box-shadow: 0 24px 60px rgba(0, 0, 0, .55);
-}
-
-/* ---- telas --------------------------------------------------------------- */
-
-.telas {
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
-  padding: 8px 0 88px; align-items: start;
-}
-.telas figure { text-align: center; }
-.telas img {
-  border-radius: 22px; border: 1px solid var(--borda); width: 100%;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, .55);
-}
-.telas figcaption { color: var(--fraco); font-size: 14px; margin-top: 14px; }
-@media (max-width: 700px) {
-  .telas { grid-template-columns: 1fr; gap: 40px; padding-bottom: 64px; }
-  .telas figure { max-width: 20rem; margin: 0 auto; }
 }
 
 /* ---- secoes -------------------------------------------------------------- */
