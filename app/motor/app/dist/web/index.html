@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#101014">
+<title>Formi</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%; background: #101014; color: #f0f0f2; overflow: hidden;
+    font: 15px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-user-select: none; user-select: none;
+  }
+  #palco { position: relative; width: 100vw; height: 100dvh; background: #000; }
+  #video { position: absolute; inset: 0; width: 100%; height: 100%;
+           object-fit: contain; }
+  #tela  { position: absolute; inset: 0; width: 100%; height: 100%; }
+  /* Espelha video e canvas JUNTOS: o esqueleto continua casando com o corpo,
+     e a leitura fica como a de um espelho de academia. O HUD fica de fora. */
+  #palco.espelhado #video, #palco.espelhado #tela { transform: scaleX(-1); }
+
+  #hud { position: absolute; top: 0; left: 0; padding: 24px 16px 14px;
+         pointer-events: none; text-shadow: 0 1px 3px rgba(0,0,0,.9); }
+  #fase { font-size: 13px; letter-spacing: .1em; color: #5adc78; font-weight: 600; }
+  #reps small { font-size: 18px; opacity: .55; }
+  #medidas { font: 12px/1.6 ui-monospace, "Cascadia Mono", monospace; opacity: .8; }
+  #medidas b { font-weight: 500; display: inline-block; min-width: 92px; }
+  #medidas i { opacity: .45; font-style: normal; }
+  #medidas em { font-style: normal; }
+  #medidas em.fora { color: #ff6b6b; font-weight: 700; }
+
+
+  /* A barra segue a direcao do CORPO: vertical para exercicio em pe, horizontal
+     para exercicio deitado. Um indicador viaja nela junto com o movimento — ela
+     nao conta intervalo, ela guia a repeticao.
+     Elemento da interface, nao do canvas: o canvas e espelhado na frontal. */
+  #ritmo-barra { position: absolute; pointer-events: none;
+                 background: rgba(255,255,255,.12); display: none; }
+  #ritmo-barra.vertical   { top: 0; bottom: 0; right: 0; width: 26px; }
+  #ritmo-barra.horizontal { left: 0; right: 0; top: 0; height: 26px; }
+  #ritmo-barra > div { position: absolute; background: #5adc78; border-radius: 4px;
+                       box-shadow: 0 0 18px rgba(90,220,120,.85); }
+  #ritmo-barra.vertical   > div { left: 3px; right: 3px; height: 14%; }
+  #ritmo-barra.horizontal > div { top: 3px; bottom: 3px; width: 14%; }
+  #ritmo-barra.parado > div { background: rgba(255,255,255,.35); box-shadow: none; }
+
+  #professor { position: absolute; display: none; object-fit: contain;
+               background: #000; }
+  #professor.demo { inset: 0; width: 100%; height: 100%; z-index: 6; }
+
+  #demo-capa { position: absolute; inset: auto 0 0 0; z-index: 7; padding: 20px
+               20px calc(20px + env(safe-area-inset-bottom)); text-align: center;
+               background: linear-gradient(transparent, rgba(0,0,0,.85) 40%); }
+  #demo-capa.oculto { display: none; }
+  #demo-capa p { font-size: 14px; opacity: .8; margin-bottom: 12px; }
+  #demo-capa button { background: #5adc78; color: #08110c; font-weight: 700;
+                      width: 100%; padding: 14px; border: 0; border-radius: 12px;
+                      font: inherit; font-weight: 700; }
+
+  #aviso-envelope { position: absolute; left: 0; right: 0; bottom: 74px;
+                    display: none; padding: 9px 14px; font-size: 12px;
+                    text-align: center; background: rgba(235,140,60,.92);
+                    color: #1a1000; font-weight: 600; }
+
+  /* O semaforo virou o FUNDO do contador em vez de um circulo proprio.
+     Um disco de 112px no meio da tela era grande e intrusivo; o contador ja e
+     grande, ja esta na tela e ja e para onde o olho vai. A cor e continua —
+     um professor nao alterna entre tres estados, vai ficando preocupado. */
+  #reps { font-size: 44px; font-weight: 300; line-height: 1;
+          margin: 6px 0 10px; padding: 8px 18px; border-radius: 14px;
+          display: inline-block; background: rgba(61,125,255,.55);
+          transition: background .25s linear, color .25s linear; }
+
+  /* O resumo e a tela; o video e um MODO que se abre por botao.
+     Ele ja foi o contrario — video em tela cheia, em laco perpetuo, com o
+     resumo por baixo. O resultado foi que o resumo simplesmente nao existia
+     para quem olhava, e nao havia como sair do laco. */
+  /* Opaco: o resumo e uma tela, nao uma camada. Com 3% de transparencia a
+     imagem da camera continuava aparecendo por tras dos graficos. */
+  #resumo { position: absolute; inset: 0; z-index: 8;
+            background: #101014; text-align: center; }
+  #resumo.oculto { display: none; }
+  #resumo-conteudo { position: absolute; inset: 0; overflow-y: auto;
+                     display: flex; flex-direction: column; gap: 14px;
+                     align-items: stretch;
+                     padding: calc(20px + env(safe-area-inset-top)) 16px
+                              calc(20px + env(safe-area-inset-bottom)); }
+  /* Coluna do mesmo tamanho dos graficos: numa tela larga os botoes iam de
+     ponta a ponta enquanto o grafico parava em 420px. */
+  #resumo-conteudo > * { max-width: 420px; width: 100%; margin: 0 auto; }
+  #resumo-conteudo.oculto { display: none; }
+  #resumo h2 { font-size: 20px; font-weight: 600; }
+  #resumo-numeros { font-size: 13px; line-height: 1.8; }
+  #resumo-numeros b { font-size: 42px; font-weight: 200; display: block;
+                      line-height: 1.1; }
+  #resumo-erros { font-size: 13px; opacity: .85; line-height: 1.7; }
+  #revisao-aviso { font-size: 12px; opacity: .7; line-height: 1.5; }
+  #revisao-aviso:empty { display: none; }
+
+  #graficos { display: flex; flex-direction: column; gap: 10px; }
+  #graficos canvas { width: 100%; max-width: 420px; align-self: center;
+                     background: rgba(255,255,255,.04); border-radius: 10px; }
+  /* Sem isto os filhos do flex esticam para preencher a sobra e o botao vira
+     um retangulo verde de meia tela. */
+  #resumo-conteudo > * { flex: 0 0 auto; }
+  #resumo-botoes > button { flex: 1 1 0; }
+
+  #resumo-botoes, #revisao-botoes { display: flex; gap: 10px;
+                                    justify-content: center; flex-wrap: wrap; }
+  button.secundario { background: rgba(255,255,255,.12); color: #f0f0f2;
+                      padding: 12px 16px; border: 0; border-radius: 11px;
+                      font: inherit; font-weight: 600; }
+  button.secundario:disabled { opacity: .35; }
+  /* O video do professor e um ELEMENTO de verdade, com o canvas so por cima.
+     Antes o quadro era copiado para o canvas com drawImage; no celular isso
+     depende de haver um quadro decodificado para um <video> que esta oculto, e
+     quando nao ha o drawImage nao falha — ele simplesmente nao pinta nada, e a
+     revisao vira um retangulo vazio sem nenhuma pista do motivo. */
+  #revisao-caixa { position: absolute; inset: 0; z-index: 2;
+                   overflow: hidden; background: #000; }
+  #professor-rev, #revisao { position: absolute; inset: 0;
+                             width: 100%; height: 100%; }
+  #professor-rev { object-fit: contain; background: #000; }
+  #revisao-caixa.oculto, #revisao-legenda.oculto { display: none; }
+  #revisao-legenda { position: absolute; left: 0; right: 0; z-index: 3;
+                     top: calc(12px + env(safe-area-inset-top));
+                     font-size: 12px; opacity: .9;
+                     text-shadow: 0 1px 4px rgba(0,0,0,.95); }
+  #revisao-legenda b { font-weight: 700; }
+  #revisao-botoes { position: absolute; left: 0; right: 0; z-index: 3;
+                    bottom: calc(16px + env(safe-area-inset-bottom));
+                    padding: 0 16px; }
+  #nova-serie { background: #5adc78; color: #08110c; padding: 15px; border: 0;
+                border-radius: 12px; font: inherit; font-weight: 700; }
+
+  #alerta { position: absolute; top: 82px; right: 16px; padding: 7px 13px;
+            border-radius: 999px; background: #eb3c3c; font-weight: 600;
+            font-size: 13px; letter-spacing: .04em; opacity: 0;
+            transition: opacity .2s; pointer-events: none; }
+  #alerta.on { opacity: 1; }
+
+  #rodape { position: absolute; left: 0; right: 0; bottom: 0; font-size: 13px;
+            padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+            display: flex; gap: 8px; flex-wrap: wrap; }
+  button { flex: 1 1 30%; padding: 12px 8px; border: 0; border-radius: 12px;
+           background: rgba(255,255,255,.14); color: inherit;
+           font: inherit; font-weight: 500; backdrop-filter: blur(8px); }
+  button:active { background: rgba(255,255,255,.28); }
+  #comecar { background: #5adc78; color: #08110c; font-weight: 700; }
+
+  #aviso { position: absolute; inset: 0; display: grid; place-content: center;
+           gap: 14px; padding: 32px; text-align: center; background: #101014;
+           line-height: 1.6; }
+  #aviso.oculto { display: none; }
+  #aviso h1 { font-size: 21px; font-weight: 600; }
+  #aviso p { opacity: .7; font-size: 14px; max-width: 30ch; }
+  #aviso code { font: 12px ui-monospace, monospace; opacity: .8; }
+  #fps { position: absolute; right: 14px; bottom: 74px; font-size: 11px;
+         opacity: .45; font-family: ui-monospace, monospace; }
+
+  #painel { position: absolute; inset: auto 0 0 0; z-index: 5;
+            background: #17171c; border-radius: 18px 18px 0 0;
+            padding: 20px 20px calc(20px + env(safe-area-inset-bottom));
+            display: flex; flex-direction: column; gap: 14px;
+            box-shadow: 0 -8px 40px rgba(0,0,0,.6); }
+  #painel.oculto { display: none; }
+  #painel h2 { font-size: 17px; font-weight: 600; }
+  #painel .nota { font-size: 12px; opacity: .55; margin-top: -8px; }
+  #painel label { display: flex; align-items: center; gap: 11px;
+                  font-size: 15px; flex-wrap: wrap; }
+  #painel label small { flex-basis: 100%; margin-left: 31px;
+                        font-size: 11px; opacity: .5; }
+  #painel input[type=checkbox] { width: 20px; height: 20px; accent-color: #5adc78; }
+  #painel .linha { display: flex; align-items: center; justify-content: space-between;
+                   font-size: 15px; }
+  button.mini { flex: 0 0 auto; padding: 8px 16px; font-size: 13px;
+                border-radius: 9px; }
+  #fechar-painel { background: #5adc78; color: #08110c; font-weight: 700;
+                   margin-top: 4px; }
+</style>
+</head>
+<body>
+<div id="palco">
+  <video id="video" playsinline muted autoplay></video>
+  <canvas id="tela"></canvas>
+
+  <div id="hud">
+    <div id="fase">INICIANDO</div>
+    <div id="reps">0<small>/10</small></div>
+    <div id="medidas"></div>
+  </div>
+
+  <video id="professor" playsinline muted></video>
+  <div id="demo-capa" class="oculto">
+    <p><span id="demo-conta"></span></p>
+    <button id="pular-demo">comecar agora</button>
+  </div>
+  <div id="ritmo-barra"><div></div></div>
+  <div id="resumo" class="oculto">
+    <div id="resumo-conteudo">
+      <h2>serie concluida</h2>
+      <div id="resumo-numeros"></div>
+      <div id="graficos"></div>
+      <div id="resumo-erros"></div>
+      <p id="revisao-aviso"></p>
+      <div id="resumo-botoes">
+        <button id="ver-professor" class="secundario">video do professor</button>
+        <button id="ver-comparacao" class="secundario">voce x professor</button>
+      </div>
+      <button id="nova-serie">nova serie</button>
+      <div id="resumo-botoes">
+        <button id="proximo-exercicio" class="secundario">proximo exercicio</button>
+        <button id="ao-inicio" class="secundario">voltar ao inicio</button>
+      </div>
+    </div>
+    <div id="revisao-caixa" class="oculto">
+      <video id="professor-rev" playsinline muted></video>
+      <canvas id="revisao" width="360" height="300"></canvas>
+      <p id="revisao-legenda"></p>
+      <div id="revisao-botoes">
+        <button id="repetir-video" class="secundario">repetir</button>
+        <button id="voltar-resumo" class="secundario">voltar ao resumo</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="aviso-envelope"></div>
+  <div id="alerta"></div>
+  <div id="fps"></div>
+
+  <div id="rodape">
+    <button id="ajustes-btn">ajustes</button>
+    <button id="reiniciar">reiniciar</button>
+  </div>
+
+  <div id="painel" class="oculto">
+    <h2>ajustes</h2>
+    <p class="nota">Tudo aqui e opcional. Desligue o que atrapalhar.</p>
+
+    <label><input type="checkbox" id="p-contagem"> contar em voz alta</label>
+    <label><input type="checkbox" id="p-correcoes"> falar as correcoes</label>
+    <label><input type="checkbox" id="p-esqueleto"> esqueleto sobre o video</label>
+    <label><input type="checkbox" id="p-regressiva"> contar 3, 2, 1 antes de iniciar</label>
+
+    <div class="linha">
+      <span>instrucoes do professor</span>
+      <button id="p-instrucoes" class="mini">antes e durante</button>
+    </div>
+    <p class="nota">o que fazer, antes da serie e uma dica dentro dela</p>
+
+    <div class="linha">
+      <span>revisao no fim</span>
+      <button id="p-revisao" class="mini">mostrar</button>
+    </div>
+    <p class="nota">sua execucao sobre a do professor, ao fim da serie</p>
+
+    <div class="linha">
+      <span>demonstracao</span>
+      <button id="p-demo" class="mini">2 repeticoes</button>
+    </div>
+    <p class="nota">o video todo fica na biblioteca; aqui bastam duas reps</p>
+
+    <div class="linha">
+      <span>conduzir o ritmo</span>
+      <button id="p-ritmo" class="mini">voz</button>
+    </div>
+    <p class="nota">chama voce para a proxima repeticao, sempre com voce em pe</p>
+
+    <div class="linha">
+      <span>fantasma</span>
+      <button id="p-fantasma" class="mini">nenhum</button>
+    </div>
+    <div class="linha">
+      <span>tempo por repeticao</span>
+      <button id="p-tempo" class="mini">2.0s</button>
+    </div>
+    <div class="linha">
+      <span>repeticoes por serie</span>
+      <button id="p-reps" class="mini">10</button>
+    </div>
+    <div class="linha">
+      <span>camera</span>
+      <button id="p-camera" class="mini">frontal</button>
+    </div>
+
+    <button id="fechar-painel">fechar</button>
+  </div>
+
+  <div id="aviso">
+    <h1>Formi</h1>
+    <p id="aviso-texto">
+      Apoie o celular de pé, fique <b>de lado</b> e afaste-se
+      até o <b>corpo inteiro</b> caber no quadro.
+    </p>
+    <p class="nota" id="aviso-exercicio"></p>
+    <button id="comecar">tocar para ligar a câmera</button>
+    <p><code id="diag"></code></p>
+  </div>
+</div>
+<script type="module" src="./main.js"></script>
+</body>
+</html>

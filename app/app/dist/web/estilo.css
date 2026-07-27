@@ -1,0 +1,476 @@
+/**
+ * Formi — tokens e componentes.
+ *
+ * Um arquivo so. O app tem cinco telas e um punhado de componentes; dividir em
+ * modulos de CSS custaria mais navegacao do que economiza.
+ *
+ * As cores de dado (--serie-*) nao sao escolha de gosto: passaram no validador
+ * de paleta contra a superficie #14161d — banda de luminosidade, piso de croma,
+ * separacao para daltonismo e contraste. Trocar um hex exige revalidar.
+ */
+
+:root {
+  color-scheme: dark;
+
+  /* Superficies. O mock tem tres planos: pagina, cartao, cartao elevado. */
+  --fundo: #0a0b10;
+  --superficie: #14161d;
+  --superficie-2: #1b1e27;
+  --borda: rgba(255, 255, 255, 0.07);
+  --borda-forte: rgba(255, 255, 255, 0.14);
+
+  /* Tinta. */
+  --tinta: #f2f4f8;
+  --tinta-2: #a8aec0;
+  --tinta-3: #6e7488;
+
+  /* Marca. */
+  --azul: #3d63ff;
+  --azul-claro: #6b89ff;
+  --azul-fundo: rgba(61, 99, 255, 0.14);
+  --trilho: #232739; /* passo mais claro do mesmo azul, para o fundo do medidor */
+
+  /* Estado. Icone + rotulo sempre acompanham — cor nunca sozinha. */
+  --bom: #0ca30c;
+  --atencao: #fab219;
+  --critico: #d03b3b;
+
+  /* Series de dado (validadas em #14161d, modo escuro). */
+  --serie-1: #3d63ff;
+  --serie-2: #19a37a;
+  --serie-3: #d95926;
+  --serie-4: #9085e9;
+  --grade: #23262f;
+  --eixo: #2f3340;
+
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 20px;
+  --r-xl: 28px;
+
+  --seguro-topo: env(safe-area-inset-top);
+  --seguro-base: env(safe-area-inset-bottom);
+  --altura-nav: 64px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--fundo);
+  color: var(--tinta);
+  font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body { overflow: hidden; }
+
+button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer; }
+a { color: inherit; }
+
+/* --------------------------------------------------------------------------
+   Casca: uma area rolavel + a barra de abas fixa.
+   -------------------------------------------------------------------------- */
+
+#app {
+  position: relative;
+  height: 100dvh;
+  max-width: 520px;
+  margin: 0 auto;
+  overflow: hidden;
+  background: var(--fundo);
+}
+
+.tela {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: calc(20px + var(--seguro-topo)) 20px
+           calc(28px + var(--altura-nav) + var(--seguro-base));
+}
+
+/* O onboarding nao tem abas: recupera o espaco reservado a elas. */
+.tela.sem-nav { padding-bottom: calc(24px + var(--seguro-base)); }
+
+/* Entrada de tela. Curta de proposito — animacao de navegacao que se percebe
+   como animacao atrasa o app. */
+@keyframes entrar { from { opacity: 0; transform: translateY(6px); } }
+.tela > * { animation: entrar .22s ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .tela > * { animation: none; }
+  * { transition: none !important; }
+}
+
+/* --------------------------------------------------------------------------
+   Tipografia
+   -------------------------------------------------------------------------- */
+
+.saudacao { color: var(--tinta-2); font-size: 17px; }
+.manchete {
+  font-size: 29px; line-height: 1.15; font-weight: 700;
+  letter-spacing: -0.02em; margin: 6px 0 8px;
+}
+.manchete .destaque { color: var(--azul); }
+.legenda { color: var(--tinta-2); font-size: 14px; }
+.titulo-secao {
+  font-size: 13px; font-weight: 600; color: var(--tinta-3);
+  letter-spacing: .06em; text-transform: uppercase; margin: 26px 0 12px;
+}
+
+/* --------------------------------------------------------------------------
+   Cartao
+   -------------------------------------------------------------------------- */
+
+.cartao {
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: var(--r-lg);
+  padding: 18px;
+  margin-bottom: 14px;
+}
+.cartao-cabecalho {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.cartao-titulo { font-size: 16px; font-weight: 600; }
+.cartao-nota { color: var(--tinta-3); font-size: 13px; }
+
+/* --------------------------------------------------------------------------
+   Cabecalho da tela inicial
+   -------------------------------------------------------------------------- */
+
+.topo { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.avatar {
+  flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%;
+  background: var(--superficie-2); border: 1px solid var(--borda);
+  display: grid; place-items: center; font-size: 15px; font-weight: 600;
+  color: var(--tinta-2);
+}
+
+/* --------------------------------------------------------------------------
+   Anel + numeros do progresso
+   -------------------------------------------------------------------------- */
+
+.progresso-corpo { display: flex; align-items: center; gap: 20px; }
+.anel { flex: 0 0 auto; position: relative; }
+.anel svg { display: block; transform: rotate(-90deg); }
+.anel-trilho { stroke: var(--trilho); }
+.anel-arco { stroke: var(--azul); stroke-linecap: round; transition: stroke-dasharray .8s cubic-bezier(.2,.8,.2,1); }
+.anel-centro {
+  position: absolute; inset: 0; display: grid; place-content: center;
+  text-align: center;
+}
+.anel-valor { font-size: 34px; font-weight: 700; letter-spacing: -0.03em; line-height: 1; }
+.anel-de { font-size: 12px; color: var(--tinta-3); margin-top: 3px; }
+
+.pares { display: flex; flex-direction: column; gap: 14px; flex: 1 1 auto; }
+.par-rotulo { font-size: 13px; color: var(--tinta-2); }
+.par-valor { font-size: 22px; font-weight: 700; line-height: 1.15; letter-spacing: -0.02em; }
+.par-unidade { font-size: 13px; color: var(--tinta-2); font-weight: 400; }
+
+/* --------------------------------------------------------------------------
+   Barras da semana. Coluna <= 24px, topo arredondado, base quadrada.
+   -------------------------------------------------------------------------- */
+
+.semana { display: flex; gap: 2px; margin-top: 18px; }
+.semana-dia {
+  flex: 1 1 0; display: flex; flex-direction: column; align-items: center; gap: 8px;
+  background: none; padding: 0;
+}
+.semana-coluna {
+  width: 4px; max-width: 24px; height: 44px; border-radius: 4px 4px 0 0;
+  background: var(--trilho); align-self: center;
+  transition: background .2s, height .3s;
+}
+.semana-dia.feito .semana-coluna { background: var(--azul); }
+.semana-dia.hoje .semana-letra { color: var(--tinta); font-weight: 700; }
+.semana-letra { font-size: 12px; color: var(--tinta-3); }
+
+/* --------------------------------------------------------------------------
+   Cartao do proximo treino
+   -------------------------------------------------------------------------- */
+
+.proximo {
+  display: flex; align-items: center; gap: 14px; width: 100%; text-align: left;
+  background: var(--superficie); border: 1px solid var(--borda);
+  border-radius: var(--r-lg); padding: 18px; margin-bottom: 14px;
+  transition: border-color .18s, background .18s;
+}
+.proximo:active { background: var(--superficie-2); border-color: var(--borda-forte); }
+.proximo-texto { flex: 1 1 auto; min-width: 0; }
+.proximo-etiqueta { font-size: 13px; color: var(--tinta-2); }
+.proximo-nome {
+  font-size: 19px; font-weight: 700; letter-spacing: -0.02em; margin: 3px 0 3px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.proximo-meta { font-size: 13px; color: var(--tinta-2); }
+.seta {
+  flex: 0 0 auto; width: 46px; height: 46px; border-radius: 50%;
+  background: var(--azul); display: grid; place-items: center;
+}
+
+/* --------------------------------------------------------------------------
+   Barra de abas
+   -------------------------------------------------------------------------- */
+
+/* Fundo solido, sem `backdrop-filter`. O desfoque custa uma camada de
+   composicao repintada a cada rolagem — e sobre uma pagina que ja e quase preta
+   ele nao se ve. Aqui ele chegou a travar a captura de tela do proprio
+   navegador, que e o aviso barato do jank que apareceria no celular. */
+#nav {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 10;
+  display: flex; background: #0d0f16;
+  border-top: 1px solid var(--borda);
+  padding-bottom: var(--seguro-base);
+}
+#nav.oculto { display: none; }
+.aba {
+  flex: 1 1 0; display: flex; flex-direction: column; align-items: center;
+  gap: 4px; padding: 11px 4px 10px; color: var(--tinta-3); font-size: 11px;
+  transition: color .16s;
+}
+.aba.ativa { color: var(--azul); }
+.aba svg { display: block; }
+
+/* --------------------------------------------------------------------------
+   Botoes
+   -------------------------------------------------------------------------- */
+
+.botao {
+  display: block; width: 100%; padding: 16px; border-radius: var(--r-md);
+  background: var(--azul); color: #fff; font-weight: 700; font-size: 16px;
+  transition: opacity .16s, transform .1s;
+}
+.botao:active { transform: scale(.985); }
+.botao:disabled { opacity: .3; }
+.botao.fantasma {
+  background: var(--superficie-2); color: var(--tinta);
+  border: 1px solid var(--borda);
+}
+.botao.perigo { background: none; color: var(--critico); font-weight: 600; }
+
+/* --------------------------------------------------------------------------
+   Onboarding
+   -------------------------------------------------------------------------- */
+
+.ob-topo { display: flex; align-items: center; gap: 14px; margin-bottom: 26px; }
+.ob-voltar { flex: 0 0 auto; padding: 6px; color: var(--tinta-2); margin-left: -6px; }
+.ob-trilha {
+  flex: 1 1 auto; height: 4px; border-radius: 999px; background: var(--trilho);
+  overflow: hidden;
+}
+.ob-progresso {
+  height: 100%; background: var(--azul); border-radius: 999px;
+  transition: width .35s cubic-bezier(.2,.8,.2,1);
+}
+.ob-passo { font-size: 12px; color: var(--tinta-3); flex: 0 0 auto; font-variant-numeric: tabular-nums; }
+
+.ob-pergunta {
+  font-size: 25px; font-weight: 700; letter-spacing: -0.02em;
+  line-height: 1.2; margin-bottom: 8px;
+}
+.ob-ajuda { color: var(--tinta-2); font-size: 14px; margin-bottom: 22px; }
+
+.opcoes { display: flex; flex-direction: column; gap: 10px; }
+.opcao {
+  display: flex; align-items: center; gap: 14px; width: 100%; text-align: left;
+  padding: 16px; border-radius: var(--r-md); background: var(--superficie);
+  border: 1px solid var(--borda); transition: border-color .16s, background .16s;
+}
+.opcao:active { background: var(--superficie-2); }
+.opcao.marcada { border-color: var(--azul); background: var(--azul-fundo); }
+.opcao-emoji { flex: 0 0 auto; font-size: 22px; line-height: 1; width: 26px; text-align: center; }
+.opcao-texto { flex: 1 1 auto; min-width: 0; }
+/* Sao <span> dentro de <span> — sem o block eles saem na mesma linha, colados. */
+.opcao-titulo { display: block; font-weight: 600; font-size: 15px; }
+.opcao-desc { display: block; font-size: 13px; color: var(--tinta-2); margin-top: 2px; }
+.opcao-marca { flex: 0 0 auto; color: var(--azul); opacity: 0; transition: opacity .16s; }
+.opcao.marcada .opcao-marca { opacity: 1; }
+
+.campo {
+  width: 100%; padding: 16px; border-radius: var(--r-md);
+  background: var(--superficie); border: 1px solid var(--borda);
+  color: var(--tinta); font: inherit; font-size: 17px;
+}
+.campo:focus { outline: none; border-color: var(--azul); }
+.campo::placeholder { color: var(--tinta-3); }
+
+.ob-rodape {
+  position: sticky; bottom: 0; padding-top: 18px; margin-top: 24px;
+  background: linear-gradient(transparent, var(--fundo) 30%);
+}
+
+/* Tela de geracao do plano. */
+.gerando { display: grid; place-content: center; text-align: center; gap: 18px; min-height: 60dvh; }
+.gerando-anel {
+  width: 56px; height: 56px; border-radius: 50%; justify-self: center;
+  border: 3px solid var(--trilho); border-top-color: var(--azul);
+  animation: girar .9s linear infinite;
+}
+@keyframes girar { to { transform: rotate(360deg); } }
+.gerando-passo { color: var(--tinta-2); font-size: 14px; min-height: 20px; }
+
+/* --------------------------------------------------------------------------
+   Lista de treinos
+   -------------------------------------------------------------------------- */
+
+.sessao { padding: 0; overflow: hidden; }
+.sessao-topo {
+  display: flex; align-items: center; gap: 14px; width: 100%; text-align: left;
+  padding: 16px 18px;
+}
+.sessao-dia {
+  flex: 0 0 auto; width: 42px; height: 42px; border-radius: 12px;
+  background: var(--superficie-2); display: grid; place-content: center;
+  text-align: center; line-height: 1.1;
+}
+.sessao-dia b { font-size: 13px; font-weight: 700; }
+.sessao-dia.feita { background: var(--azul); }
+.sessao-info { flex: 1 1 auto; min-width: 0; }
+.sessao-nome { font-weight: 600; font-size: 15px; }
+.sessao-meta { font-size: 13px; color: var(--tinta-2); margin-top: 2px; }
+.sessao-abrir { flex: 0 0 auto; color: var(--tinta-3); transition: transform .2s; }
+.sessao.aberta .sessao-abrir { transform: rotate(180deg); }
+
+.sessao-itens { display: none; padding: 0 18px 8px; }
+.sessao.aberta .sessao-itens { display: block; }
+.bloco-rotulo {
+  font-size: 11px; font-weight: 600; color: var(--tinta-3);
+  letter-spacing: .07em; text-transform: uppercase;
+  padding: 12px 0 6px; border-top: 1px solid var(--borda); margin-top: 6px;
+}
+.item {
+  display: flex; align-items: baseline; gap: 12px; padding: 9px 0;
+  font-size: 14px;
+}
+.item-nome { flex: 1 1 auto; min-width: 0; }
+.item-musculos { font-size: 12px; color: var(--tinta-3); margin-top: 2px; }
+.marca-camera { font-size: 11px; margin-left: 6px; opacity: .85; }
+.item-dose {
+  flex: 0 0 auto; color: var(--tinta-2); font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.sessao-acao { padding: 12px 18px 18px; }
+
+/* --------------------------------------------------------------------------
+   Graficos
+   -------------------------------------------------------------------------- */
+
+.gr-titulo { font-size: 15px; font-weight: 600; }
+.gr-sub { font-size: 13px; color: var(--tinta-2); margin-top: 2px; }
+.gr-svg { display: block; width: 100%; height: auto; overflow: visible; margin-top: 14px; }
+.gr-grade { stroke: var(--grade); stroke-width: 1; }
+.gr-eixo-texto { fill: var(--tinta-3); font-size: 11px; font-variant-numeric: tabular-nums; }
+.gr-rotulo { fill: var(--tinta-2); font-size: 12px; }
+.gr-valor { fill: var(--tinta); font-size: 12px; font-weight: 600; }
+.gr-marca { transition: opacity .15s; }
+.gr-alvo { fill: transparent; }
+.gr-alvo:hover + .gr-marca, .gr-alvo:focus + .gr-marca { opacity: .78; }
+
+/* Dica: HTML posicionado sobre o SVG, nao <title> nativo — o nativo demora
+   um segundo para aparecer e nao existe no toque. */
+.gr-caixa { position: relative; }
+.dica {
+  position: absolute; z-index: 5; pointer-events: none; opacity: 0;
+  transform: translate(-50%, -100%);
+  background: var(--superficie-2); border: 1px solid var(--borda-forte);
+  border-radius: 10px; padding: 8px 11px; font-size: 12px; line-height: 1.4;
+  white-space: nowrap; box-shadow: 0 8px 24px rgba(0, 0, 0, .5);
+  transition: opacity .12s;
+}
+.dica.on { opacity: 1; }
+.dica b { display: block; font-size: 13px; }
+.dica-chave {
+  display: inline-block; width: 8px; height: 8px; border-radius: 2px;
+  margin-right: 6px; vertical-align: baseline;
+}
+
+.legenda-graf { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 14px; }
+.legenda-item { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--tinta-2); }
+.legenda-chave { width: 10px; height: 10px; border-radius: 3px; flex: 0 0 auto; }
+
+.tabela-alternar {
+  font-size: 12px; color: var(--tinta-3); margin-top: 12px;
+  text-decoration: underline; text-underline-offset: 3px;
+}
+.tabela-dados { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
+.tabela-dados.oculto { display: none; }
+.tabela-dados th, .tabela-dados td {
+  text-align: right; padding: 6px 4px; border-bottom: 1px solid var(--borda);
+}
+.tabela-dados th:first-child, .tabela-dados td:first-child { text-align: left; }
+.tabela-dados th { color: var(--tinta-3); font-weight: 500; }
+.tabela-dados td { font-variant-numeric: tabular-nums; }
+
+/* --------------------------------------------------------------------------
+   Peca de numero (ladrilho)
+   -------------------------------------------------------------------------- */
+
+.ladrilhos { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+.ladrilho {
+  background: var(--superficie); border: 1px solid var(--borda);
+  border-radius: var(--r-md); padding: 15px;
+}
+.ladrilho-rotulo { font-size: 12px; color: var(--tinta-2); }
+.ladrilho-valor {
+  font-size: 26px; font-weight: 700; letter-spacing: -0.02em;
+  margin-top: 5px; line-height: 1.1;
+}
+.ladrilho-valor small { font-size: 13px; font-weight: 400; color: var(--tinta-2); }
+.ladrilho-delta { font-size: 12px; margin-top: 4px; display: flex; align-items: center; gap: 4px; }
+.ladrilho-delta.sobe { color: var(--bom); }
+.ladrilho-delta.desce { color: var(--tinta-3); }
+
+/* --------------------------------------------------------------------------
+   Composicao da nota
+   -------------------------------------------------------------------------- */
+
+.fatia { margin-top: 14px; }
+.fatia:first-child { margin-top: 0; }
+.fatia-topo { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 7px; }
+.fatia-nome { color: var(--tinta-2); }
+.fatia-valor { font-variant-numeric: tabular-nums; font-weight: 600; }
+.fatia-trilho { height: 6px; border-radius: 999px; background: var(--trilho); overflow: hidden; }
+.fatia-preenche { height: 100%; border-radius: 999px; background: var(--azul); transition: width .6s; }
+
+/* --------------------------------------------------------------------------
+   Conquistas e mensagens
+   -------------------------------------------------------------------------- */
+
+.faixa {
+  display: flex; align-items: center; gap: 12px; padding: 14px 16px;
+  border-radius: var(--r-md); background: var(--azul-fundo);
+  border: 1px solid rgba(61, 99, 255, .3); margin-bottom: 14px;
+}
+.faixa-emoji { font-size: 20px; flex: 0 0 auto; }
+.faixa-texto { font-size: 14px; line-height: 1.4; }
+.faixa-texto b { font-weight: 700; }
+
+.conquistas { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 14px; }
+.conquista {
+  flex: 0 0 auto; width: 96px; padding: 14px 10px; border-radius: var(--r-md);
+  background: var(--superficie); border: 1px solid var(--borda); text-align: center;
+}
+.conquista.travada { opacity: .38; }
+.conquista-emoji { font-size: 24px; }
+.conquista-nome { font-size: 11px; margin-top: 7px; color: var(--tinta-2); line-height: 1.3; }
+
+/* --------------------------------------------------------------------------
+   Perfil
+   -------------------------------------------------------------------------- */
+
+.linha-dado {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 14px 0; border-bottom: 1px solid var(--borda); font-size: 15px;
+}
+.linha-dado:last-child { border-bottom: 0; }
+.linha-rotulo { color: var(--tinta-2); }
+.linha-valor { font-weight: 600; text-align: right; }
+
+.aviso-legal { font-size: 12px; color: var(--tinta-3); line-height: 1.6; margin-top: 18px; }
+
+.vazio { text-align: center; padding: 40px 20px; color: var(--tinta-2); }
+.vazio-emoji { font-size: 34px; margin-bottom: 12px; }
+.vazio p { font-size: 14px; line-height: 1.6; }

@@ -1,0 +1,151 @@
+{
+  "id": "flexao_solo",
+  "versao": 2,
+  "nome": "Flexão de braço no solo",
+  "orientacao_camera": "lateral",
+  "enquadramento": "paisagem",
+  "feedback": "audio",
+  "tempo": {
+    "rep_ms": 2600,
+    "min_rep_ms": 1500,
+    "max_rep_ms": 5000
+  },
+  "demo": {
+    "video": "demo/flexao_solo.mp4",
+    "ciclos": 2
+  },
+  "landmarks_requeridos": [
+    "ombro_e",
+    "cotovelo_e",
+    "punho_e",
+    "quadril_e",
+    "tornozelo_e"
+  ],
+  "visibilidade_minima": 0.6,
+  "metadados": {
+    "categoria": "membros_superiores",
+    "equipamento": "nenhum",
+    "dificuldade": "intermediario",
+    "musculos": [
+      "peitoral",
+      "triceps",
+      "core"
+    ],
+    "instrucao_posicionamento": "Fique de lado para a camera, corpo inteiro no quadro.",
+    "validado_contra": "NAO VALIDADO — template estrutural. Calibrar thresholds com video real antes de publicar."
+  },
+  "medidas": [
+    {
+      "id": "cotovelo",
+      "tipo": "angulo",
+      "pontos": [
+        "ombro_e",
+        "cotovelo_e",
+        "punho_e"
+      ],
+      "suavizacao": {
+        "min_cutoff": 1.0,
+        "beta": 0.01
+      }
+    },
+    {
+      "id": "alinhamento_corpo",
+      "tipo": "angulo",
+      "pontos": [
+        "ombro_e",
+        "quadril_e",
+        "tornozelo_e"
+      ],
+      "suavizacao": {
+        "min_cutoff": 0.8,
+        "beta": 0.007
+      }
+    },
+    {
+      "id": "altura_ombro",
+      "tipo": "distancia_y",
+      "pontos": [
+        "punho_e",
+        "ombro_e"
+      ],
+      "suavizacao": {
+        "min_cutoff": 1.0,
+        "beta": 0.01
+      }
+    }
+  ],
+  "maquina_estados": {
+    "inicial": "prancha_alta",
+    "estados": [
+      {
+        "nome": "prancha_alta",
+        "ao_completar": {
+          "contar_rep": true,
+          "som": "ding"
+        },
+        "transicoes": [
+          {
+            "para": "descendo",
+            "quando": "cotovelo < 150"
+          }
+        ]
+      },
+      {
+        "nome": "descendo",
+        "timeout_ms": 6000,
+        "ao_timeout": "prancha_alta",
+        "transicoes": [
+          {
+            "para": "embaixo",
+            "quando": "cotovelo < 110"
+          }
+        ]
+      },
+      {
+        "nome": "embaixo",
+        "timeout_ms": 8000,
+        "ao_timeout": "prancha_alta",
+        "transicoes": [
+          {
+            "para": "subindo",
+            "quando": "cotovelo > 120"
+          }
+        ]
+      },
+      {
+        "nome": "subindo",
+        "timeout_ms": 6000,
+        "ao_timeout": "prancha_alta",
+        "transicoes": [
+          {
+            "para": "prancha_alta",
+            "quando": "cotovelo > 155"
+          }
+        ]
+      }
+    ]
+  },
+  "regras_erro": [
+    {
+      "id": "quadril_caido",
+      "tipo": "instantaneo",
+      "condicao": "alinhamento_corpo < 160",
+      "frames_consecutivos": 10,
+      "cooldown_ms": 6000,
+      "max_por_serie": 3,
+      "severidade": "aviso",
+      "mensagem": "Contraia o abdômen, quadril alinhado",
+      "rotulo_display": "QUADRIL"
+    },
+    {
+      "id": "amplitude_insuficiente",
+      "tipo": "por_repeticao",
+      "condicao": "min_rep_cotovelo > 100",
+      "cooldown_ms": 0,
+      "max_por_serie": 10,
+      "severidade": "info",
+      "mensagem": "Desça mais, peito perto do chão",
+      "rotulo_display": "AMPLITUDE"
+    }
+  ]
+}

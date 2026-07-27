@@ -1,0 +1,217 @@
+{
+  "id": "agachamento_livre",
+  "versao": 10,
+  "nome": "Agachamento livre",
+  "orientacao_camera": "lateral",
+  "enquadramento": "retrato",
+  "feedback": "visual",
+  "tempo": {
+    "rep_ms": 2400,
+    "min_rep_ms": 1400,
+    "max_rep_ms": 5000
+  },
+  "demo": {
+    "video": "/capturas/agachamento_correto.mp4",
+    "ciclos": 2
+  },
+  "landmarks_requeridos": [
+    "quadril",
+    "joelho",
+    "tornozelo",
+    "ombro"
+  ],
+  "visibilidade_minima": 0.6,
+  "metadados": {
+    "categoria": "membros_inferiores",
+    "equipamento": "nenhum",
+    "dificuldade": "iniciante",
+    "musculos": [
+      "quadriceps",
+      "gluteos",
+      "posteriores"
+    ],
+    "instrucao_posicionamento": "Fique de lado para a camera, corpo inteiro visivel, a cerca de 2 metros.",
+    "validado_contra": "calibrado contra capturas/agachamento_correto.mp4 (10 reps, 9:16, sala real) tomado como execucao de referencia. Limiares = pior rep observada + margem.",
+    "nota_calibracao": "Entrada de 'agachado' a 130 (nao 120) para dar janela a regra de profundidade, que avisa acima de 115. Com a entrada colada no limiar da regra, quem agachava muito raso nao era contado NEM corrigido — ficava invisivel. Histerese de 12 graus ate a saida em 142.",
+    "nota_lado": "Joelho usa angulo_visivel e a porta de rastreio usa nomes-base: os dois escolhem o lado que a camera enxerga. Fixados no esquerdo, o usuario que ficasse com o flanco direito para a camera via a porta FECHAR no fundo do agachamento (visibilidade 0.27 contra 0.91), e tudo sumia da tela."
+  },
+  "medidas": [
+    {
+      "id": "joelho",
+      "tipo": "angulo_visivel",
+      "pontos": [
+        "quadril",
+        "joelho",
+        "tornozelo"
+      ],
+      "suavizacao": {
+        "min_cutoff": 1.0,
+        "beta": 0.01
+      }
+    },
+    {
+      "id": "tronco",
+      "tipo": "angulo_vertical",
+      "pontos": [
+        "quadril_e",
+        "ombro_e"
+      ],
+      "suavizacao": {
+        "min_cutoff": 0.8,
+        "beta": 0.007
+      }
+    },
+    {
+      "id": "altura_quadril",
+      "tipo": "distancia_y",
+      "pontos": [
+        "tornozelo_e",
+        "quadril_e"
+      ],
+      "suavizacao": {
+        "min_cutoff": 1.0,
+        "beta": 0.01
+      }
+    }
+  ],
+  "maquina_estados": {
+    "inicial": "em_pe",
+    "estados": [
+      {
+        "nome": "em_pe",
+        "ao_completar": {
+          "contar_rep": true,
+          "som": "ding"
+        },
+        "transicoes": [
+          {
+            "para": "descendo",
+            "quando": "joelho < 155"
+          }
+        ]
+      },
+      {
+        "nome": "descendo",
+        "timeout_ms": 6000,
+        "ao_timeout": "em_pe",
+        "transicoes": [
+          {
+            "para": "agachado",
+            "quando": "joelho < 130"
+          }
+        ]
+      },
+      {
+        "nome": "agachado",
+        "timeout_ms": 10000,
+        "ao_timeout": "em_pe",
+        "transicoes": [
+          {
+            "para": "subindo",
+            "quando": "joelho > 142"
+          }
+        ]
+      },
+      {
+        "nome": "subindo",
+        "timeout_ms": 6000,
+        "ao_timeout": "em_pe",
+        "transicoes": [
+          {
+            "para": "em_pe",
+            "quando": "joelho > 160"
+          }
+        ]
+      }
+    ]
+  },
+  "regras_erro": [
+    {
+      "id": "tronco_inclinado",
+      "tipo": "instantaneo",
+      "condicao": "tronco > 82",
+      "estados_ativos": [
+        "descendo",
+        "agachado"
+      ],
+      "frames_consecutivos": 8,
+      "cooldown_ms": 5000,
+      "max_por_serie": 3,
+      "severidade": "aviso",
+      "mensagem": "Mantenha o peito mais erguido",
+      "rotulo_display": "TRONCO"
+    },
+    {
+      "id": "profundidade_insuficiente",
+      "tipo": "por_repeticao",
+      "condicao": "min_rep_joelho > 115",
+      "cooldown_ms": 0,
+      "max_por_serie": 3,
+      "severidade": "info",
+      "mensagem": "Desça um pouco mais na próxima",
+      "rotulo_display": "AMPLITUDE"
+    },
+    {
+      "id": "repeticao_muito_rapida",
+      "tipo": "por_repeticao",
+      "condicao": "t_rep_ms < 900",
+      "cooldown_ms": 0,
+      "max_por_serie": 3,
+      "severidade": "aviso",
+      "mensagem": "Controle a descida, sem pressa",
+      "rotulo_display": "RITMO"
+    }
+  ],
+  "instrucoes": [
+    {
+      "id": "pes",
+      "quando": "no_topo",
+      "repeticoes": 3,
+      "antes": "Pés na largura dos ombros, com os dedos ligeiramente para fora.",
+      "demo": "Repare na abertura dos pés antes de o professor descer.",
+      "durante": "pés na largura"
+    },
+    {
+      "id": "olhar",
+      "quando": "no_topo",
+      "repeticoes": 3,
+      "antes": "Olhe para frente durante todo o movimento, nunca para baixo.",
+      "demo": "O olhar do professor fica à frente, e as costas acompanham.",
+      "durante": "olhe pra frente"
+    },
+    {
+      "id": "costas",
+      "quando": "descida",
+      "repeticoes": 3,
+      "antes": "Mantenha as costas retas na descida, sem curvar a lombar.",
+      "demo": "As costas descem retas: o tronco inclina inteiro, não dobra.",
+      "durante": "costas retas"
+    },
+    {
+      "id": "profundidade",
+      "quando": "descida",
+      "repeticoes": 3,
+      "regra": "profundidade_insuficiente",
+      "antes": "Desça até as coxas ficarem paralelas ao chão.",
+      "demo": "Veja as coxas chegando à paralela antes de o professor subir."
+    }
+  ],
+  "envelope": {
+    "ativo": true,
+    "margem": 10,
+    "cooldown_ms": 2500,
+    "max_por_serie": 10,
+    "mensagens": {
+      "tronco": {
+        "acima": "Mantenha o peito mais erguido"
+      },
+      "joelho": {
+        "acima": "Desça um pouco mais",
+        "abaixo": "Não precisa descer tanto"
+      }
+    },
+    "ms_sustentado": 150,
+    "avisos_por_serie": 1,
+    "reps_entre_avisos": 2
+  }
+}

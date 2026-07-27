@@ -1,0 +1,5 @@
+# Binarios: nunca normalizar fim de linha. Um .wasm com CRLF injetado
+# nao carrega, e o erro nao diz que o arquivo foi corrompido no commit.
+*.wasm binary
+*.task binary
+*.mp4 binary

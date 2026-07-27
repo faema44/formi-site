@@ -1,0 +1,111 @@
+{
+  "id": "agachamento_frontal",
+  "versao": 1,
+  "nome": "Agachamento (vista frontal)",
+  "orientacao_camera": "frontal",
+  "enquadramento": "retrato",
+  "feedback": "visual",
+  "tempo": { "rep_ms": 2400, "min_rep_ms": 1400, "max_rep_ms": 5000 },
+  "demo": { "video": "demo/agachamento_frontal.mp4", "ciclos": 2 },
+  "landmarks_requeridos": ["quadril_e", "quadril_d", "joelho_e", "joelho_d", "tornozelo_e", "tornozelo_d"],
+  "visibilidade_minima": 0.6,
+
+  "metadados": {
+    "categoria": "membros_inferiores",
+    "equipamento": "nenhum",
+    "dificuldade": "iniciante",
+    "instrucao_posicionamento": "Fique de FRENTE para a camera, pes na largura do quadril.",
+    "por_que_existe": "Joelho valgo (joelhos entrando para dentro) e IMPOSSIVEL de medir na vista lateral. Precisa de uma definicao propria, com a camera de frente.",
+    "validado_contra": "NAO VALIDADO — template estrutural. Calibrar com video real."
+  },
+
+  "medidas": [
+    {
+      "id": "altura_quadril",
+      "tipo": "distancia_y",
+      "pontos": ["tornozelo_e", "quadril_e"],
+      "suavizacao": { "min_cutoff": 1.0, "beta": 0.01 }
+    },
+    {
+      "id": "larg_joelhos",
+      "tipo": "distancia",
+      "pontos": ["joelho_e", "joelho_d"],
+      "suavizacao": { "min_cutoff": 0.8, "beta": 0.007 }
+    },
+    {
+      "id": "larg_tornozelos",
+      "tipo": "distancia",
+      "pontos": ["tornozelo_e", "tornozelo_d"],
+      "suavizacao": { "min_cutoff": 0.8, "beta": 0.007 }
+    },
+    {
+      "id": "nivel_ombros",
+      "tipo": "angulo_horizontal",
+      "pontos": ["ombro_e", "ombro_d"],
+      "suavizacao": { "min_cutoff": 0.8, "beta": 0.007 }
+    }
+  ],
+
+  "maquina_estados": {
+    "inicial": "em_pe",
+    "estados": [
+      {
+        "nome": "em_pe",
+        "ao_completar": { "contar_rep": true, "som": "ding" },
+        "transicoes": [
+          { "para": "descendo", "quando": "altura_quadril < 1.30" }
+        ]
+      },
+      {
+        "nome": "descendo",
+        "timeout_ms": 6000,
+        "ao_timeout": "em_pe",
+        "transicoes": [
+          { "para": "agachado", "quando": "altura_quadril < 1.05" }
+        ]
+      },
+      {
+        "nome": "agachado",
+        "timeout_ms": 10000,
+        "ao_timeout": "em_pe",
+        "transicoes": [
+          { "para": "subindo", "quando": "altura_quadril > 1.15" }
+        ]
+      },
+      {
+        "nome": "subindo",
+        "timeout_ms": 6000,
+        "ao_timeout": "em_pe",
+        "transicoes": [
+          { "para": "em_pe", "quando": "altura_quadril > 1.38" }
+        ]
+      }
+    ]
+  },
+
+  "regras_erro": [
+    {
+      "id": "joelho_valgo",
+      "tipo": "instantaneo",
+      "condicao": "larg_joelhos / larg_tornozelos < 0.85",
+      "estados_ativos": ["descendo", "agachado"],
+      "frames_consecutivos": 8,
+      "cooldown_ms": 5000,
+      "max_por_serie": 3,
+      "severidade": "critico",
+      "mensagem": "Empurre os joelhos para fora",
+      "rotulo_display": "JOELHOS"
+    },
+    {
+      "id": "ombros_desnivelados",
+      "tipo": "instantaneo",
+      "condicao": "nivel_ombros > 8",
+      "frames_consecutivos": 12,
+      "cooldown_ms": 8000,
+      "max_por_serie": 2,
+      "severidade": "aviso",
+      "mensagem": "Ombros nivelados, peso igual nos dois pes",
+      "rotulo_display": "OMBROS"
+    }
+  ]
+}
