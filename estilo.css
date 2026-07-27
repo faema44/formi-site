@@ -74,9 +74,13 @@ nav.topo-links a:hover { color: var(--tinta); }
    sobre o fundo. */
 .painel-marca { padding-bottom: 72px; }
 .painel-marca img {
-  width: 100%; height: auto; border-radius: 16px;
+  /* So o bloco de marca, e nao a prancha inteira: o resto dela anuncia
+     funcionalidade que o app ainda nao tem. Largura contida porque um
+     logotipo esticado em 60rem vira banner. */
+  width: 100%; max-width: 30rem; height: auto; margin: 0 auto;
+  border-radius: 16px;
   border: 1px solid var(--borda);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, .55);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, .5);
 }
 
 /* ---- secoes -------------------------------------------------------------- */
