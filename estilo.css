@@ -66,6 +66,17 @@ nav.topo-links a:hover { color: var(--tinta); }
 }
 .selo b { color: var(--tinta); font-weight: 600; }
 
+/* ---- painel de marca ----------------------------------------------------- */
+
+/* A arte e clara e a pagina e escura: a borda evita que ela flutue solta sobre
+   o fundo, e o raio combina com o das telas logo abaixo. */
+.marca { padding-bottom: 72px; }
+.marca img {
+  width: 100%; height: auto; border-radius: 16px;
+  border: 1px solid var(--borda);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .55);
+}
+
 /* ---- telas --------------------------------------------------------------- */
 
 .telas {
