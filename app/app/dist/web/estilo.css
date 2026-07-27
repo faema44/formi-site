@@ -302,8 +302,15 @@ a { color: inherit; }
   background: linear-gradient(transparent, var(--fundo) 30%);
 }
 
-/* Tela de geracao do plano. */
-.gerando { display: grid; place-content: center; text-align: center; gap: 18px; min-height: 60dvh; }
+/* Tela de geracao do plano.
+   O `min-height: 60dvh` com centralizacao jogava o anel para o rodape e deixava
+   o titulo sozinho no alto, com um vazio de 200px no meio — parecia tela
+   quebrada justamente no passo que deveria mostrar trabalho acontecendo. O
+   bloco agora fica logo abaixo da pergunta, que e onde o olho ja esta. */
+.gerando {
+  display: grid; place-items: center; text-align: center; gap: 18px;
+  padding: 40px 0;
+}
 .gerando-anel {
   width: 56px; height: 56px; border-radius: 50%; justify-self: center;
   border: 3px solid var(--trilho); border-top-color: var(--azul);
